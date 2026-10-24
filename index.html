@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Penghitung Emas & Jadwal Harga</title>
+<style>
+  :root{
+    --bg:#0d0f14;
+    --card:#151923;
+    --gold:#d4af37;
+    --gold-light:#f0d675;
+    --text:#e8e8e8;
+    --muted:#8a8f9c;
+    --green:#26c281;
+    --red:#e74c3c;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    padding:20px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:20px;
+  }
+  h1{
+    color:var(--gold);
+    font-size:1.6rem;
+    text-align:center;
+    letter-spacing:1px;
+  }
+  .clock{
+    background:var(--card);
+    border:1px solid #2a2f3d;
+    border-radius:14px;
+    padding:14px 24px;
+    text-align:center;
+    font-variant-numeric:tabular-nums;
+    box-shadow:0 4px 20px rgba(0,0,0,.4);
+  }
+  .clock .time{
+    font-size:2rem;
+    font-weight:700;
+    color:var(--gold-light);
+    letter-spacing:2px;
+  }
+  .clock .date{
+    font-size:.85rem;
+    color:var(--muted);
+    margin-top:4px;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:20px;
+    width:100%;
+    max-width:900px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid #2a2f3d;
+    border-radius:16px;
+    padding:20px;
+    box-shadow:0 6px 24px rgba(0,0,0,.35);
+  }
+  .card h2{
+    font-size:1.05rem;
+    color:var(--gold);
+    margin-bottom:16px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  label{
+    display:block;
+    font-size:.8rem;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  input,select{
+    width:100%;
+    padding:10px 12px;
+    background:#0d0f14;
+    border:1px solid #2a2f3d;
+    border-radius:10px;
+    color:var(--text);
+    font-size:.95rem;
+    outline:none;
+    margin-bottom:14px;
+    transition:border .2s;
+  }
+  input:focus,select:focus{border-color:var(--gold)}
+  button{
+    width:100%;
+    padding:12px;
+    background:linear-gradient(135deg,var(--gold),#b8942e);
+    border:none;
+    border-radius:10px;
+    color:#0d0f14;
+    font-weight:700;
+    font-size:.95rem;
+    cursor:pointer;
+    transition:transform .15s,filter .15s;
+  }
+  button:hover{filter:brightness(1.1)}
+  button:active{transform:scale(.98)}
+  .result{
+    margin-top:16px;
+    padding:14px;
+    background:#0d0f14;
+    border-radius:10px;
+    border:1px dashed #2a2f3d;
+    font-size:.9rem;
+    line-height:1.6;
+  }
+  .result strong{color:var(--gold-light)}
+  .price-now{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:6px;
+  }
+  .price-now .val{
+    font-size:1.4rem;
+    font-weight:700;
+    color:var(--gold-light);
+  }
+  .trend-up{color:var(--green)}
+  .trend-down{color:var(--red)}
+  .schedule-item{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 0;
+    border-bottom:1px solid #1f2430;
+    font-size:.88rem;
+  }
+  .schedule-item:last-child{border-bottom:none}
+  .schedule-item .day{color:var(--muted);font-size:.8rem}
+  .badge{
+    font-size:.7rem;
+    padding:2px 8px;
+    border-radius:20px;
+    font-weight:600;
+  }
+  .badge.up{background:rgba(38,194,129,.15);color:var(--green)}
+  .badge.down{background:rgba(231,76,60,.15);color:var(--red)}
+  .note{font-size:.72rem;color:var(--muted);margin-top:12px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<h1>💰 Penghitung & Jadwal Harga Emas</h1>
+
+<div class="clock">
+  <div class="time" id="clockTime">00:00:00</div>
+  <div class="date" id="clockDate">-</div>
+</div>
+
+<div class="grid">
+
+  <!-- KALKULATOR -->
+  <div class="card">
+    <h2>🧮 Kalkulator Emas</h2>
+    <label>Harga emas per gram (Rp)</label>
+    <input type="number" id="hargaPerGram" value="1500000" min="1">
+
+    <label>Berat emas (gram)</label>
+    <input type="number" id="berat" value="1" step="0.01" min="0.01">
+
+    <label>Kadar / Karat</label>
+    <select id="karat">
+      <option value="24">24K (99.9%)</option>
+      <option value="22">22K (91.6%)</option>
+      <option value="18">18K (75%)</option>
+      <option value="14">14K (58.3%)</option>
+      <option value="10">10K (41.7%)</option>
+    </select>
+
+    <button onclick="hitungEmas()">Hitung Nilai Emas</button>
+
+    <div class="result" id="hasilEmas">
+      Masukkan data lalu klik hitung.
+    </div>
+  </div>
+
+  <!-- JADWAL -->
+  <div class="card">
+    <h2>📅 Jadwal Naik/Turun Harga</h2>
+    <div class="result" id="jadwalBox">
+      Memuat jadwal...
+    </div>
+    <div class="note">
+      * Jadwal ini adalah pola simulasi/estimasi umum pergerakan harga emas berdasarkan hari dalam seminggu dan jam pasar. Bukan prediksi pasti. Harga emas dipengaruhi pasar global, kurs, dan berita ekonomi.
+    </div>
+  </div>
+
+</div>
+
+<div class="card" style="max-width:900px;width:100%">
+  <h2>📊 Harga Emas Saat Ini (Simulasi Real-time)</h2>
+  <div class="price-now">
+    <div>
+      <div style="font-size:.75rem;color:var(--muted)">Per gram (Rp)</div>
+      <div class="val" id="hargaSekarang">Rp 1.500.000</div>
+    </div>
+    <div id="trendInfo" style="font-size:.85rem;text-align:right">
+      <span class="badge up" id="trendBadge">▲ Naik</span>
+      <div style="font-size:.72rem;color:var(--muted);margin-top:4px" id="trendPct">+0.00%</div>
+    </div>
+  </div>
+  <div style="font-size:.75rem;color:var(--muted);margin-top:8px" id="updateTime">Update: -</div>
+</div>
+
+<script>
+/* ============ JAM & TANGGAL ============ */
+const hariNama = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const bulanNama = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function updateClock(){
+  const now = new Date();
+  const jam = pad(now.getHours());
+  const menit = pad(now.getMinutes());
+  const detik = pad(now.getSeconds());
+  document.getElementById('clockTime').textContent = `${jam}:${menit}:${detik}`;
+
+  const hari = hariNama[now.getDay()];
+  const tgl = now.getDate();
+  const bln = bulanNama[now.getMonth()];
+  const thn = now.getFullYear();
+  document.getElementById('clockDate').textContent = `${hari}, ${tgl} ${bln} ${thn}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+/* ============ KALKULATOR EMAS ============ */
+function formatRupiah(num){
+  return 'Rp ' + Math.round(num).toLocaleString('id-ID');
+}
+
+function hitungEmas(){
+  const harga = parseFloat(document.getElementById('hargaPerGram').value);
+  const berat = parseFloat(document.getElementById('berat').value);
+  const karat = parseFloat(document.getElementById('karat').value);
+
+  if(!harga || harga <= 0 || !berat || berat <= 0){
+    document.getElementById('hasilEmas').innerHTML =
+      '<span style="color:#e74c3c">Masukkan harga dan berat yang valid.</span>';
+    return;
+  }
+
+  const faktorKarat = karat / 24;
+  const hargaPerGramKarat = harga * faktorKarat;
+  const total = hargaPerGramKarat * berat;
+
+  document.getElementById('hasilEmas').innerHTML = `
+    <div>Harga acuan 24K / gram: <strong>${formatRupiah(harga)}</strong></div>
+    <div>Kadar ${karat}K → per gram: <strong>${formatRupiah(hargaPerGramKarat)}</strong></div>
+    <div>Berat: <strong>${berat} gram</strong></div>
+    <hr style="border-color:#2a2f3d;margin:10px 0">
+    <div style="font-size:1.05rem">Total nilai emas: <strong>${formatRupiah(total)}</strong></div>
+  `;
+}
+hitungEmas();
+
+/* ============ JADWAL SIMULASI ============ */
+function buatJadwal(){
+  const now = new Date();
+  const jadwal = [];
+  const pola = {
+    0: { // Minggu (pasar tutup, cenderung stabil)
+      jam: ['00:00','06:00','12:00','18:00'],
+      arah: ['stabil','stabil','stabil','stabil'],
+      ket: ['Pasar tutup','Pasar tutup','Pasar tutup','Pasar tutup']
+    },
+    1: { // Senin
+      jam: ['08:00','10:00','14:00','20:00'],
+      arah: ['naik','naik','turun','naik'],
+      ket: ['Pembukaan Asia','Sesi Eropa','Koreksi','Sesi Amerika']
+    },
+    2: { // Selasa
+      jam: ['08:00','11:00','15:00','21:00'],
+      arah: ['naik','turun','naik','naik'],
+      ket: ['Asia positif','Profit taking','Eropa naik','AS naik']
+    },
+    3: { // Rabu
+      jam: ['08:00','12:00','16:00','22:00'],
+      arah: ['turun','naik','naik','turun'],
+      ket: ['Koreksi pagi','Eropa positif','Data AS','Profit taking']
+    },
+    4: { // Kamis
+      jam: ['08:00','10:00','15:00','21:00'],
+      arah: ['naik','naik','turun','naik'],
+      ket: ['Asia naik','Eropa naik','Koreksi','AS naik']
+    },
+    5: { // Jumat
+      jam: ['08:00','11:00','15:00','20:00'],
+      arah: ['naik','turun','turun','turun'],
+      ket: ['Asia naik','Profit taking','Eropa turun','Tutup minggu']
+    },
+    6: { // Sabtu
+      jam: ['09:00','12:00','15:00','18:00'],
+      arah: ['stabil','stabil','stabil','stabil'],
+      ket: ['Pasar terbatas','Pasar terbatas','Pasar terbatas','Pasar terbatas']
+    }
+  };
+
+  let html = '';
+  let mulai = new Date(now);
+  for(let d=0; d<3; d++){
+    const tgl = new Date(mulai);
+    tgl.setDate(mulai.getDate() + d);
+    const hari = tgl.getDay();
+    const data = pola[hari];
+    const labelHari = d === 0 ? 'Hari ini' : d === 1 ? 'Besok' : hariNama[hari];
+    html += `<div style="margin-bottom:12px">
+      <div style="color:var(--gold);font-weight:600;font-size:.85rem;margin-bottom:6px">
+        ${labelHari}, ${tgl.getDate()} ${bulanNama[tgl.getMonth()]} ${tgl.getFullYear()}
+      </div>`;
+    data.jam.forEach((j, i) => {
+      const arah = data.arah[i];
+      let badge = '';
+      if(arah === 'naik') badge = '<span class="badge up">▲ Naik</span>';
+      else if(arah === 'turun') badge = '<span class="badge down">▼ Turun</span>';
+      else badge = '<span class="badge" style="background:rgba(138,143,156,.15);color:#8a8f9c">● Stabil</span>';
+      html += `<div class="schedule-item">
+        <div><span style="color:var(--gold-light)">${j}</span> <span class="day">${data.ket[i]}</span></div>
+        <div>${badge}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  document.getElementById('jadwalBox').innerHTML = html;
+}
+buatJadwal();
+
+/* ============ HARGA SIMULASI REAL-TIME ============ */
+let hargaDasar = 1500000;
+let hargaPrev = hargaDasar;
+let hargaNow = hargaDasar;
+
+function simulasiHarga(){
+  // fluktuasi kecil ±0.3%
+  const perubahan = (Math.random() - 0.48) * 0.006;
+  hargaNow = hargaNow * (1 + perubahan);
+  // jaga rentang wajar
+  if(hargaNow < hargaDasar * 0.97) hargaNow = hargaDasar * 0.97;
+  if(hargaNow > hargaDasar * 1.03) hargaNow = hargaDasar * 1.03;
+
+  const diff = hargaNow - hargaPrev;
+  const pct = (diff / hargaPrev) * 100;
+
+  document.getElementById('hargaSekarang').textContent = formatRupiah(hargaNow);
+
+  const badge = document.getElementById('trendBadge');
+  const pctEl = document.getElementById('trendPct');
+  if(diff >= 0){
+    badge.className = 'badge up';
+    badge.textContent = '▲ Naik';
+    pctEl.className = 'trend-up';
+    pctEl.textContent = '+' + pct.toFixed(2) + '%';
+  } else {
+    badge.className = 'badge down';
+    badge.textContent = '▼ Turun';
+    pctEl.className = 'trend-down';
+    pctEl.textContent = pct.toFixed(2) + '%';
+  }
+
+  const now = new Date();
+  document.getElementById('updateTime').textContent =
+    `Update: ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} WIB (simulasi)`;
+
+  hargaPrev = hargaNow;
+}
+simulasiHarga();
+setInterval(simulasiHarga, 3000);
+
+/* refresh jadwal tiap menit (jaga jika ganti hari) */
+setInterval(buatJadwal, 60000);
+</script>
+</body>
+</html>
